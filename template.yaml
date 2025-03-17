@@ -1,0 +1,221 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Globals:
+  Function:
+    Timeout: 20
+    Runtime: java21
+    Architectures:
+      - x86_64
+Resources:
+  JumpRecognizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: jump-pulse-recognizer
+      Handler: telran.monitoring.App::handleRequest
+      FunctionName: jump-pulse-recognizer
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Resource: "*"
+              Action:
+                - "dynamodb:*"
+      Environment:
+        Variables:
+          LOGGER_LEVEL: finest
+          STREAM_NAME: !Ref JumpDataStream
+      Events:
+        DynamoDbItemInsert:
+          Type: DynamoDB
+          Properties:
+            StartingPosition: LATEST
+            BatchSize: 1
+            Stream: !GetAtt PulseValuesStream.StreamArn
+            FilterCriteria:
+              Filters:
+                - Pattern: '{"eventName":["INSERT"]}'
+  PulseValuesStream:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: pulse_values
+      KeySchema:
+        - AttributeName: patientId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: patientId
+          AttributeType: N
+        - AttributeName: timestamp
+          AttributeType: N
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+  JumpDataStream:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: pulse_jump_values
+      KeySchema:
+        - AttributeName: patientId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: patientId
+          AttributeType: N
+        - AttributeName: timestamp
+          AttributeType: N
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+  AveragePulseValuesStream:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: average_pulse_values
+      KeySchema:
+        - AttributeName: patientId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: patientId
+          AttributeType: N
+        - AttributeName: timestamp
+          AttributeType: N
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+  PulseValuesReducerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: pulse-values-reducer
+      Handler: telran.monitoring.App::handleRequest
+      FunctionName: pulse-values-reducer
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Resource: "*"
+              Action:
+                - "dynamodb:*"
+      Environment:
+        Variables:
+          LOGGER_LEVEL: finest
+          STREAM_NAME: !Ref AveragePulseValuesStream
+      Events:
+        DynamoDbItemInsert:
+          Type: DynamoDB
+          Properties:
+            StartingPosition: LATEST
+            BatchSize: 1
+            Stream: !GetAtt PulseValuesStream.StreamArn
+            FilterCriteria:
+              Filters:
+                - Pattern: '{"eventName":["INSERT"]}'
+  AbnormalPulseValuesStream:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: abnormal_pulse_values
+      KeySchema:
+        - AttributeName: patientId
+          KeyType: HASH
+        - AttributeName: timestamp
+          KeyType: RANGE
+      AttributeDefinitions:
+        - AttributeName: patientId
+          AttributeType: N
+        - AttributeName: timestamp
+          AttributeType: N
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+  AbnormalPulseValuesRecognizerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: abnormal-values-recognizer
+      Handler: telran.monitoring.AppAbnormal::handleRequest
+      FunctionName: abnormal-values-recognizer
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Resource: "*"
+              Action:
+                - "dynamodb:*"
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "lambda:InvokeFunction"
+              Resource: !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:SendAbnormalToSns"
+      Environment:
+        Variables:
+          LOGGER_LEVEL: finest
+          STREAM_NAME: !Ref AbnormalPulseValuesStream
+          STREAM_CLASS_NAME: DynamoDbStreamSensorData
+          RANGE_PROVIDER_URL: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/range"
+      Events:
+        DynamoDbItemInsert:
+          Type: DynamoDB
+          Properties:
+            StartingPosition: LATEST
+            BatchSize: 1
+            Stream: !GetAtt PulseValuesStream.StreamArn
+            FilterCriteria:
+              Filters:
+                - Pattern: '{"eventName":["INSERT"]}'
+  RangeDataProviderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: range-data-provider
+      Handler: telran.monitoring.AppRange::handleRequest
+      FunctionName: range-data-provider
+      Runtime: java21
+      MemorySize: 512
+      Timeout: 15
+      Environment:
+        Variables:
+          DB_CONNECTION_STRING: "jdbc:postgresql://patients-db.c2xms40gozhk.us-east-1.rds.amazonaws.com:5432/postgres"
+          DB_USERNAME: "postgres"
+          DB_PASSWORD: "vuhpuv-kewvod-8biQse"
+      Events:
+        GetRangeEvent:
+          Type: Api
+          Properties:
+            Path: /range
+            Method: GET
+  AvgValuesPopulatorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: avg-values-populator
+      Handler: telran.monitoring.AvgValuesPopulator::handleRequest
+      FunctionName: avg-values-populator
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Resource: "*"
+              Action:
+                - "dynamodb:*"
+                - "s3:*"
+      Environment:
+        Variables:
+          STREAM_NAME: !Ref AveragePulseValuesStream
+          MONGO_URI: mongodb+srv://root:12345.CoM@cluster0.3gx41.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+      Events:
+        DynamoDbItemInsert:
+          Type: DynamoDB
+          Properties:
+            StartingPosition: LATEST
+            BatchSize: 1
+            Stream: !GetAtt AveragePulseValuesStream.StreamArn
+            FilterCriteria:
+              Filters:
+                - Pattern: '{"eventName":["INSERT"]}'
+Outputs:
+  RangeDataProviderApiUrl:
+    Description: "URL for RangeDataProvider API"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/range"

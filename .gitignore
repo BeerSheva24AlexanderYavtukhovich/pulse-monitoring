@@ -1,0 +1,67 @@
+
+**/.git/
+**/.aws-sam/
+# Компилированные файлы и временные папки
+**/target/
+**/out/
+**/build/
+**/.gradle/
+**/.idea/
+**/.vscode/
+**/.DS_Store
+
+# Maven и Gradle
+**/pom.xml.tag
+**/pom.xml.releaseBackup
+**/pom.xml.versionsBackup
+**/pom.xml.next
+**/release.properties
+**/dependency-reduced-pom.xml
+**/buildNumber.properties
+**/.mvn/timing.properties
+**/.mvn/wrapper/maven-wrapper.jar
+
+# Eclipse файлы
+**/.project
+**/.classpath
+**/.settings/
+
+# IntelliJ IDEA файлы
+**/.idea/**/workspace.xml
+**/.idea/**/tasks.xml
+**/.idea/**/usage.statistics.xml
+**/.idea/**/dictionaries/
+**/.idea/**/shelf/
+**/.idea/**/aws.xml
+**/.idea/**/contentModel.xml
+**/.idea/**/dataSources/
+**/.idea/**/dataSources.ids
+**/.idea/**/dataSources.local.xml
+**/.idea/**/sqlDataSources.xml
+**/.idea/**/dynamic.xml
+**/.idea/**/uiDesigner.xml
+**/.idea/**/dbnavigator.xml
+**/.idea/**/gradle.xml
+**/.idea/**/libraries
+**/.idea/**/sonarlint/
+**/.idea/httpRequests
+**/.idea/caches/build_file_checksums.ser
+
+# Gradle
+**/.gradle/
+**/cmake-build-*/
+
+# Mongo Explorer plugin
+**/.idea/**/mongoSettings.xml
+
+# File-based project format
+**/*.iws
+
+# Cursive Clojure plugin
+**/.idea/replstate.xml
+
+# Android Studio & Crashlytics
+**/com_crashlytics_export_strings.xml
+**/crashlytics.properties
+**/crashlytics-build.properties
+**/fabric.properties
