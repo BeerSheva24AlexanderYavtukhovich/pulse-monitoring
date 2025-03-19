@@ -9,13 +9,11 @@ import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
 
-import telran.monitoring.api.Range;
+public class AppEmail implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+    private final EmailDataSource emailDataSource;
 
-public class AppRange implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
-    private final RangeDataSource rangeDataSource;
-
-    public AppRange() {
-        this.rangeDataSource = new RangeDataSource();
+    public AppEmail() {
+        this.emailDataSource = new EmailDataSource();
     }
 
     @Override
@@ -30,8 +28,8 @@ public class AppRange implements RequestHandler<APIGatewayProxyRequestEvent, API
                 throw new IllegalArgumentException("Parameter 'id' is required.");
             }
             long patientId = Long.parseLong(queryParams.get("id"));
-            Range range = rangeDataSource.getRange(patientId);
-            String responseBody = String.format("{\"min\":%d, \"max\":%d}", range.min(), range.max());
+            String email = emailDataSource.getEmail(patientId);
+            String responseBody = String.format("{\"email\":%s}", email);
             return response.withStatusCode(200).withBody(responseBody);
 
         } catch (NoSuchElementException e) {

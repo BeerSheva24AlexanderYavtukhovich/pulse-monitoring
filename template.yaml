@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Globals:
   Function:
-    Timeout: 20
+    Timeout: 30
     Runtime: java21
     Architectures:
       - x86_64
@@ -188,6 +188,26 @@ Resources:
           Properties:
             Path: /range
             Method: GET
+  EmailAddressProviderFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: email-address-provider
+      Handler: telran.monitoring.AppEmail::handleRequest
+      FunctionName: email-data-provider
+      Runtime: java21
+      MemorySize: 512
+      Timeout: 15
+      Environment:
+        Variables:
+          DB_CONNECTION_STRING: "jdbc:postgresql://patients-db.c2xms40gozhk.us-east-1.rds.amazonaws.com:5432/postgres"
+          DB_USERNAME: "postgres"
+          DB_PASSWORD: "vuhpuv-kewvod-8biQse"
+      Events:
+        GetEmailEvent:
+          Type: Api
+          Properties:
+            Path: /email
+            Method: GET
   AvgValuesPopulatorFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -215,7 +235,41 @@ Resources:
             FilterCriteria:
               Filters:
                 - Pattern: '{"eventName":["INSERT"]}'
+
+  AppAbnormalNotifierFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: abnormal-values-email-notifier
+      Handler: telran.monitoring.AppAbnormalNotifier::handleRequest
+      FunctionName: abnormal-values-email-notifier
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - "dynamodb:*"
+                - "s3:*"
+                - "ses:SendEmail"
+              Resource: "*"
+      Environment:
+        Variables:
+          SENDER_EMAIL: yavtik@gmail.com
+          TESTING_PREFIX: yavtik+
+          EMAIL_PROVIDER_URL: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/email"
+      Events:
+        DynamoDbItemInsert:
+          Type: DynamoDB
+          Properties:
+            StartingPosition: LATEST
+            BatchSize: 1
+            Stream: !GetAtt AveragePulseValuesStream.StreamArn
+            FilterCriteria:
+              Filters:
+                - Pattern: '{"eventName":["INSERT"]}'
+
 Outputs:
   RangeDataProviderApiUrl:
     Description: "URL for RangeDataProvider API"
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/range"
+  EmailAddressProviderApiUrl:
+    Description: "URL for EmailAddressProvider API"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/email"

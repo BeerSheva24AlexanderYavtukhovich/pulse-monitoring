@@ -19,14 +19,14 @@ public class Main {
     static final int TIMEOUT_RESPONSE = 5000;
     static final String DEFAULT_HOST = "localhost";
     static final int DEFAULT_PORT = 5000;
-    static final int DEFAULT_N_PACKETS = 10;
+    static final int DEFAULT_N_PACKETS = 50;
     static final int JUMP_PROB = 10;
     static final int MIN_JUMP_PERCENT = 10;
     static final int MAX_JUMP_PERCENT = 100;
     static final int JUMP_POSITIVE_PROB = 70;
-    static final long PATIENT_ID_FOR_INFO_LOGGING = 123;
-    private static final int PATIENTS_RANGE_ID_MIN = 123;
-    private static final int PATIENTS_RANGE_ID_MAX = 125;
+    static final long PATIENT_ID_FOR_INFO_LOGGING = 1;
+    private static final int PATIENTS_RANGE_ID_MIN = 1;
+    private static final int PATIENTS_RANGE_ID_MAX = 10;
     static HashMap<Long, Integer> patientIdPulseValue = new HashMap<>();
     static DatagramSocket socket = null;
 
