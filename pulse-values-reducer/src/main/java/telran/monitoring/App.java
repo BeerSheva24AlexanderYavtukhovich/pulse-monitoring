@@ -22,7 +22,7 @@ public class App {
     private String streamName = getStreamName();
     Logger logger = new LoggerStandard(streamName);
     MiddlewareDataStream<SensorData> dataStream;
-    LatestValuesSaver sensorDataValuesList = new LatestValuesSaverMap();
+    LatestValuesSaver sensorDataValuesList = new LatestValuesSaverMap(logger);
 
     @SuppressWarnings("unchecked")
     public App() {

@@ -1,10 +1,18 @@
 package telran.monitoring;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 
-import telran.monitoring.api.*;
+import telran.monitoring.api.SensorData;
+import telran.monitoring.logging.Logger;
 
-public class LatestValuesSaverMap implements LatestValuesSaver {
+public class LatestValuesSaverMap extends DataSaverLogger {
+    protected LatestValuesSaverMap(Logger logger) {
+        super(logger);
+    }
+
     private HashMap<Long, List<SensorData>> history = new HashMap<>();
 
     @Override
