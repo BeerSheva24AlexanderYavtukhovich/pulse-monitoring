@@ -19,7 +19,7 @@ public class Main {
     static final int TIMEOUT_RESPONSE = 5000;
     static final String DEFAULT_HOST = "localhost";
     static final int DEFAULT_PORT = 5000;
-    static final int DEFAULT_N_PACKETS = 50;
+    static final int DEFAULT_N_PACKETS = 100;
     static final int JUMP_PROB = 10;
     static final int MIN_JUMP_PERCENT = 10;
     static final int MAX_JUMP_PERCENT = 100;

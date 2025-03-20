@@ -7,6 +7,44 @@ Globals:
     Architectures:
       - x86_64
 Resources:
+  AveragePulseBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ${AWS::AccountId}-${AWS::Region}-average-pulse-bucket
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Name
+          Value: ${AWS::AccountId}-${AWS::Region}-average-pulse-bucket
+  JumpPulseBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: ${AWS::AccountId}-${AWS::Region}-jump-pulse-bucket
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      Tags:
+        - Key: Name
+          Value: ${AWS::AccountId}-${AWS::Region}-jump-pulse-bucket
   JumpRecognizerFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -19,10 +57,17 @@ Resources:
               Resource: "*"
               Action:
                 - "dynamodb:*"
+                - "s3:*"
+        - S3ReadPolicy:
+            BucketName: !Ref JumpPulseBucket
+        - S3WritePolicy:
+            BucketName: !Ref JumpPulseBucket
       Environment:
         Variables:
           LOGGER_LEVEL: finest
           STREAM_NAME: !Ref JumpDataStream
+          BUCKET_NAME: !Ref JumpPulseBucket
+          LATEST_VALUES_SAVER_CLASS: telran.monitoring.LatestDataSaverS3
       Events:
         DynamoDbItemInsert:
           Type: DynamoDB
@@ -102,10 +147,17 @@ Resources:
               Resource: "*"
               Action:
                 - "dynamodb:*"
+                - "s3:*"
+        - S3ReadPolicy:
+            BucketName: !Ref AveragePulseBucket
+        - S3WritePolicy:
+            BucketName: !Ref AveragePulseBucket
       Environment:
         Variables:
           LOGGER_LEVEL: finest
           STREAM_NAME: !Ref AveragePulseValuesStream
+          BUCKET_NAME: !Ref AveragePulseBucket
+          LATEST_VALUES_SAVER_CLASS: "telran.monitoring.LatestDataSaverS3"
       Events:
         DynamoDbItemInsert:
           Type: DynamoDB

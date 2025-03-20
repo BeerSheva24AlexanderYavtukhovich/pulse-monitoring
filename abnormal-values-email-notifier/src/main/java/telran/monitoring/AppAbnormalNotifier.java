@@ -15,7 +15,6 @@ import software.amazon.awssdk.services.ses.model.Content;
 import software.amazon.awssdk.services.ses.model.Destination;
 import software.amazon.awssdk.services.ses.model.Message;
 import software.amazon.awssdk.services.ses.model.SendEmailRequest;
-import software.amazon.awssdk.services.ses.model.SendEmailResponse;
 import telran.monitoring.api.SensorData;
 import telran.monitoring.logging.Logger;
 import telran.monitoring.logging.LoggerStandard;
@@ -102,9 +101,9 @@ public class AppAbnormalNotifier {
                 .build();
 
         try {
-            logger.log("info", "ready to send message to " + recipientEmail);
-            SendEmailResponse response = sesClient.sendEmail(request);
-            logger.log("info", "Email sent, message ID: " + response.messageId());
+            logger.log("info", "!!! sending disabled  !!!! ready to send message to " + recipientEmail);
+           // SendEmailResponse response = sesClient.sendEmail(request);
+           // logger.log("info", "Email sent, message ID: " + response.messageId());
         } catch (AwsServiceException | SdkClientException ex) {
             logger.log("severe", "Error sending email: " + ex.getMessage());
         }

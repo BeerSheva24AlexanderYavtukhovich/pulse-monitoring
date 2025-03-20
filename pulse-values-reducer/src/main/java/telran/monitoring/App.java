@@ -9,6 +9,7 @@ import com.amazonaws.services.lambda.runtime.events.DynamodbEvent.DynamodbStream
 import com.amazonaws.services.lambda.runtime.events.models.dynamodb.AttributeValue;
 
 import telran.monitoring.api.LatestValuesSaver;
+import static telran.monitoring.api.LatestValuesSaver.getLatestValuesSaver;
 import telran.monitoring.api.SensorData;
 import telran.monitoring.logging.Logger;
 import telran.monitoring.logging.LoggerStandard;
@@ -22,7 +23,8 @@ public class App {
     private String streamName = getStreamName();
     Logger logger = new LoggerStandard(streamName);
     MiddlewareDataStream<SensorData> dataStream;
-    LatestValuesSaver sensorDataValuesList = new LatestValuesSaverMap(logger);
+    String latestValueSaverClass = env.getOrDefault("LATEST_VALUES_SAVER_CLASS", "telran.monitoring.LatestDataSaverS3");
+    LatestValuesSaver sensorDataValuesList = getLatestValuesSaver(latestValueSaverClass, logger);
 
     @SuppressWarnings("unchecked")
     public App() {
